@@ -1,75 +1,100 @@
-import streamlit as st
+import os
 import pandas as pd
-import numpy as np
+import streamlit as st
 
-# Page Configuration
 st.set_page_config(
-    page_title="SmartSales AI",
-    page_icon="📊",
-    layout="wide"
+    page_title="SmartSales AI", page_icon="📊", layout="wide"
 )
 
-# Title & Subtitle
 st.title("SmartSales AI 🚀")
-st.write("Welcome to SmartSales AI Dashboard")
 
-# Sidebar Controls
-st.sidebar.header("Filter Options")
-time_horizon = st.sidebar.selectbox("Select Time Horizon", ["Last 7 Days", "Last 30 Days", "Year to Date"])
 
-# Sample Data Generation
-np.random.seed(42)
-dates = pd.date_range(start="2026-08-01", periods=30, freq="D")
-sales_data = pd.DataFrame({
-    "Date": dates,
-    "Sales": np.random.randint(2000, 8000, size=30),
-    "Category": np.random.choice(["Electronics", "Fashion", "Home & Kitchen", "Books"], size=30)
-})
+# Aapki CSV File load karne ka function
+@st.cache_data
+def load_data():
+    file_path = (
+        "data/sales_data.csv"
+        if os.path.exists("data/sales_data.csv")
+        else "sales_data.csv"
+    )
 
-# KPI Metrics
-st.subheader("📈 Performance Overview")
-col1, col2, col3, col4 = st.columns(4)
+    if os.path.exists(file_path):
+        df = pd.read_csv(file_path)
+        df["Date"] = pd.to_datetime(df["Date"])
+        df["Profit"] = df["Sales"] - df["Cost"]
+        return df
+    else:
+        st.error(
+            f"CSV file nahi mili! Dhyan dein ki aapki CSV file path '{file_path}' par sahi se push hui hai."
+        )
+        return None
 
-total_revenue = sales_data["Sales"].sum()
-avg_order = sales_data["Sales"].mean()
-total_orders = len(sales_data)
 
-col1.metric("Total Revenue", f"₹{total_revenue:,.0f}", "+14%")
-col2.metric("Total Orders", f"{total_orders}", "+8%")
-col3.metric("Avg Order Value", f"₹{avg_order:,.0f}", "+3.2%")
-col4.metric("AI Health Index", "96%", "+2%")
+df = load_data()
 
-st.markdown("---")
+if df is not None:
+    # Sidebar Filters
+    st.sidebar.header("Filter Options")
+    selected_category = st.sidebar.multiselect(
+        "Category Chunein",
+        options=df["Category"].unique(),
+        default=df["Category"].unique(),
+    )
+    selected_region = st.sidebar.multiselect(
+        "Region Chunein",
+        options=df["Region"].unique(),
+        default=df["Region"].unique(),
+    )
 
-# Analytics & Charts Section
-st.subheader("📊 Sales Analytics")
+    # Filtered Data
+    filtered_df = df[
+        (df["Category"].isin(selected_category))
+        & (df["Region"].isin(selected_region))
+    ]
 
-col_left, col_right = st.columns([2, 1])
+    # Top KPI Metrics
+    st.subheader("📈 Real Data Business Overview")
+    col1, col2, col3, col4 = st.columns(4)
 
-with col_left:
-    st.write("**Daily Sales Trend**")
-    line_data = sales_data.set_index("Date")[["Sales"]]
-    st.line_chart(line_data)
+    total_sales = filtered_df["Sales"].sum()
+    total_profit = filtered_df["Profit"].sum()
+    total_qty = filtered_df["Quantity"].sum()
+    total_cust = filtered_df["Customer"].nunique()
 
-with col_right:
-    st.write("**Sales by Category**")
-    category_data = sales_data.groupby("Category")["Sales"].sum()
-    st.bar_chart(category_data)
+    col1.metric("Total Sales", f"₹{total_sales:,.0f}")
+    col2.metric("Total Profit", f"₹{total_profit:,.0f}")
+    col3.metric("Items Sold", f"{total_qty}")
+    col4.metric("Unique Customers", f"{total_cust}")
 
-st.markdown("---")
+    st.markdown("---")
 
-# Interactive Button & AI Insights
-st.subheader("🤖 AI Analytics Engine")
+    # Real Charts
+    st.subheader("📊 Sales & Category Analytics")
 
-if st.button("Run Sales Analytics & Generate Report"):
-    with st.spinner("Analyzing transaction patterns..."):
-        st.success("Analysis Completed!")
-        st.markdown("""
-        * **Top Performing Category:** Electronics led total sales this period.
-        * **Peak Sales Window:** Maximum orders were placed during weekends.
-        * **AI Recommendation:** Increase stock for high-demand items to prevent stockouts.
-        """)
+    c1, c2 = st.columns(2)
+    with c1:
+        st.write("**Date Wise Sales Trend**")
+        daily_sales = filtered_df.groupby("Date")["Sales"].sum()
+        st.line_chart(daily_sales)
 
-# Data Table View
-with st.expander("View Raw Sales Dataset"):
-    st.dataframe(sales_data, use_container_width=True)
+    with c2:
+        st.write("**Category Wise Sales**")
+        cat_sales = filtered_df.groupby("Category")["Sales"].sum()
+        st.bar_chart(cat_sales)
+
+    c3, c4 = st.columns(2)
+    with c3:
+        st.write("**Region Wise Sales**")
+        region_sales = filtered_df.groupby("Region")["Sales"].sum()
+        st.bar_chart(region_sales)
+
+    with c4:
+        st.write("**Top Selling Products (Quantity)**")
+        prod_qty = filtered_df.groupby("Product")["Quantity"].sum()
+        st.bar_chart(prod_qty)
+
+    st.markdown("---")
+
+    # Raw Data View
+    with st.expander("📄 View CSV Raw Dataset"):
+        st.dataframe(filtered_df, use_container_width=True)
