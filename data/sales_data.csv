@@ -1,0 +1,13 @@
+Date,Customer,Product,Category,Region,Quantity,Sales,Cost
+2026-01-05,Rahul,Keyboard,Electronics,North,2,2400,1600
+2026-01-08,Priya,Mouse,Electronics,South,3,1500,900
+2026-01-12,Aman,Laptop,Electronics,East,1,55000,43000
+2026-01-15,Neha,Chair,Furniture,West,2,10000,7000
+2026-01-20,Rohit,Monitor,Electronics,North,1,18000,13000
+2026-02-03,Pooja,Desk,Furniture,South,1,12000,8500
+2026-02-10,Vikas,Keyboard,Electronics,East,4,4800,3200
+2026-02-15,Anjali,Laptop,Electronics,West,1,60000,47000
+2026-02-22,Karan,Mouse,Electronics,North,5,2500,1500
+2026-03-02,Simran,Chair,Furniture,South,3,15000,10500
+2026-03-10,Arjun,Monitor,Electronics,East,2,36000,26000
+2026-03-18,Riya,Desk,Furniture,West,2,24000,17000
